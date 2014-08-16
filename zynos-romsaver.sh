@@ -11,7 +11,7 @@
 
 start() {
 
-  pausetime="5"
+  pausetime="10"
   tanggal=$(date +%Y-%m-%d_%H%M%S)
   mkdir -p "logs" "rom/$tanggal"
   echo "[Zynos-Romsaver] v0.1 by @gojigeje ~ started at $tanggal"
@@ -83,7 +83,7 @@ cekonline() {
   fi
 }
 
-cekrom() {
+cekmime() {
   mime=$(file -b --mime-type "rom/$tanggal/$1")
   if [[ "$mime" = "application/octet-stream" ]]; then
     echo -e "\e[0;92mMimetype OK.. Rom Saved.. \e[0;39m"
@@ -93,7 +93,26 @@ cekrom() {
     echo "Failed! -mimetype- wrong mimetype" >> "logs/$tanggal"
     rm "rom/$tanggal/$1"
   fi
+}
 
+ceksize() {
+  sizes=$(find "rom/$tanggal/" -type f -size -7k | wc -l)
+  find "rom/$tanggal/" -type f -size -7k -exec rm {} \;
+  echo "Deleted $sizes damaged rom file(s).." >> "logs/$tanggal"
+  echo "" >> "logs/$tanggal"
+  echo "Deleted $sizes damaged rom file(s).."
+  echo ""
+}
+
+countrom() {
+  current=$(find "rom/$tanggal" -type f | wc -l)
+  overall=$(find "rom/" -type f | wc -l)
+  echo "$current new roms successfully saved.." >> "logs/$tanggal"
+  echo "Now we have $overall roms in total :)" >> "logs/$tanggal"
+  echo "" >> "logs/$tanggal"
+  echo "$current new roms successfully saved.."
+  echo "Now we have $overall roms in total :)"
+  echo ""
 }
 
 scan_range() {
@@ -119,7 +138,7 @@ scan_range() {
         else
           wget -q "http://$i:8080/rom-0" -O "rom/$tanggal/$i" &
           PID=$!
-          sleep 5
+          sleep $pausetime
           PSPID=$(ps | grep $PID | grep -v grep)
           if [ "$PSPID" != "" ]; then
             # macet
@@ -129,14 +148,14 @@ scan_range() {
             rm "rom/$tanggal/$i" > /dev/null 2>&1
           else
             # ok
-            cekrom "$i" "8080"
+            cekmime "$i" "8080"
           fi
         fi
 
     else
       wget -q "http://$i/rom-0" -O "rom/$tanggal/$i" &
       PID=$!
-      sleep 5
+      sleep $pausetime
       PSPID=$(ps | grep $PID | grep -v grep)
       if [ "$PSPID" != "" ]; then
         # macet
@@ -146,12 +165,19 @@ scan_range() {
         rm "rom/$tanggal/$i" > /dev/null 2>&11
       else
         # ok
-        cekrom "$i"
+        cekmime "$i"
       fi
 
     fi
 
   done
+
+  echo "" >> "logs/$tanggal"
+  echo "Scan finished, checking for broken rom.." >> "logs/$tanggal"
+  echo ""
+  echo "Scan finished, checking for broken rom.."
+  ceksize
+  countrom
 }
 
 # twit_hasil() {
