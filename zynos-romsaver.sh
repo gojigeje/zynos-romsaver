@@ -99,9 +99,9 @@ cekmime() {
 ceksize() {
   sizes=$(find "rom/$tanggal/" -type f -size -7k | wc -l)
   find "rom/$tanggal/" -type f -size -7k -exec rm {} \;
-  echo "Deleted $sizes damaged rom file(s).." >> "logs/$tanggal"
+  echo "Deleted $sizes broken rom file(s).." >> "logs/$tanggal"
   echo "" >> "logs/$tanggal"
-  echo "Deleted $sizes damaged rom file(s).."
+  echo "Deleted $sizes broken rom file(s).."
   echo ""
 }
 
