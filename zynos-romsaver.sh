@@ -20,26 +20,57 @@ start() {
 
   # cek online first
   if eval "ping -c 1 8.8.4.4 -w 2 > /dev/null 2>&1"; then
+    # online
     
-    # online, get external IP
-    echo -n "- Getting external IP address.. "
-    echo -n "- Getting external IP address.. " >> "logs/$tanggal"
-    ip_curl=$(curl -s http://wtfismyip.com/text | sed 's/\.[0-9]*$//')
-    ip_wget=$(wget -q -O - http://myexternalip.com/raw | sed 's/\.[0-9]*$//')
-    echo "OK"
-    echo "OK" >> "logs/$tanggal"
-
-    # use non empty value
-    if [[ ! -z "$ip_curl" ]]; then
-      prefix="$ip_curl"
-    else
-      if [[ ! -z "$ip_wget" ]]; then
-        prefix="$ip_wget"
+    # tentukan ip target
+    if [[ -z "$1" ]]; then
+      # kosong, get external
+      echo -n "- Getting external IP address.. "
+      echo -n "- Getting external IP address.. " >> "logs/$tanggal"
+      ip_curl=$(curl -s http://ipgue.ml/text | sed 's/\.[0-9]*$//')
+      ip_wget=$(wget -q -O - http://ipgue.ml/text | sed 's/\.[0-9]*$//')
+      echo "OK"
+      echo "OK" >> "logs/$tanggal"
+      
+      # use non empty value
+      if [[ ! -z "$ip_curl" ]]; then
+        prefix="$ip_curl"
       else
-        echo "ERROR! - Cannot get my external IP address :("
-          echo "ERROR! - Cannot get my external IP address :(" >> "logs/$tanggal"
-        exit 1
+        if [[ ! -z "$ip_wget" ]]; then
+          prefix="$ip_wget"
+        else
+          echo "ERROR! - Cannot get my external IP address :("
+            echo "ERROR! - Cannot get my external IP address :(" >> "logs/$tanggal"
+          exit 1
+        fi
       fi
+
+    else
+      # ada param ip, cek
+      echo "- Checking.."
+      if echo "$1" | egrep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' > /dev/null ;then
+          VALID_IP_ADDRESS=$(echo $1 | awk -F'.' '$1 <=255 && $2 <= 255 && $3 <= 255 && $4 <= 255')
+          if [ -z "$VALID_IP_ADDRESS" ]; then
+            echo -e "\e[1;93mERROR: \e[0;93mThe IP address wasn't valid; octets must be less than 256!\e[0;39m"
+            exit 1
+          else
+            prefix=$(echo $1 | sed 's/\.\.*$//;s/\.[0-9]*$//')
+          fi
+      else
+        if echo "$1" | egrep -E '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$' > /dev/null ;then
+          VALID_IP_ADDRESS=$(echo $1 | awk -F'.' '$1 <=255 && $2 <= 255 && $3 <= 255')
+          if [ -z "$VALID_IP_ADDRESS" ]; then
+            echo -e "\e[1;93mERROR: \e[0;93mThe IP address wasn't valid; octets must be less than 256!\e[0;39m"
+            exit 1
+          else
+            prefix=$(echo $1 | sed 's/\.\.*$//')
+          fi
+        else
+          echo -e "\e[1;93mERROR: \e[0;93mThe IP Address is malformed!\e[0;39m"
+          exit
+        fi
+      fi
+
     fi
 
   else
@@ -53,6 +84,7 @@ start() {
   echo "- Scanning target IP address: $prefix.1 - $prefix.255" >> "logs/$tanggal"
   echo "" 
   echo ""  >> "logs/$tanggal"
+  
   # twit_mulai
   scan_range 2> /dev/null
   # twit_hasil
